@@ -1,0 +1,12 @@
+# Downloaded data/tools (fetched via scripts/download_data.py; not checked into git)
+data/
+*.part
+
+# Python
+__pycache__/
+*.pyc
+
+# R
+.Rhistory
+.RData
+.Rproj.user/

@@ -1,0 +1,11 @@
+# scripts/download_data.py uses only the Python 3.9+ standard library
+# (argparse, urllib, zipfile, tarfile, gzip, hashlib, concurrent.futures, etc.)
+# so there are no third-party Python packages to install.
+#
+# `pip install -r requirements.txt` is safe to run and will simply do nothing.
+#
+# Non-Python, optional tools used by the script if present on PATH:
+#   - Rscript (R, for --with-r-packages -> installs the bigsnpr/LDpred2 CRAN package)
+#     https://www.r-project.org/
+#   - git (not required; PRS-CSx source is fetched as a GitHub codeload zip instead)
+# Command: python3 download_data.py --categories all --chromosomes 21 22 --prscsx-ld eur
