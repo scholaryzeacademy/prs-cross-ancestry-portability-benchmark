@@ -9,10 +9,11 @@ polygenic risk score (PRS) predictive accuracy is lost when a score trained on E
 is applied to other ancestries, and how much a recalibration step recovers. Full plan: `docs/BUILD_PLAN.md`
 (read it before making architectural decisions — this file only summarizes it).
 
-**Current status:** Stages 1-2 implemented and verified on real data (chr21+chr22 smoke-test subset).
+**Current status:** Stages 1-3 implemented and verified on real data (chr21+chr22 smoke-test subset).
 Stage 1 (`src/shared_stage1_1000g_download_qc/`) downloads/QCs 1000 Genomes. Stage 2
 (`src/trackA_synthetic/stage2_gcta_simulation/`) runs the GCTA phenotype simulation for both scenarios.
-Stages 3+ (GWAS, PRS construction, evaluation, recalibration, Track B) are not yet built. See
+Stage 3 (`src/trackA_synthetic/stage3_eur_gwas/`) runs the EUR-only discovery GWAS for both scenarios.
+Stage 4+ (PRS construction, evaluation, recalibration, Track B) is not yet built. See
 `METHODS.md` for the run record and non-obvious fixes/quirks found while implementing each stage —
 read it before re-deriving something that was already debugged there.
 

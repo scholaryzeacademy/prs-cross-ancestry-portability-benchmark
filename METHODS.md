@@ -70,7 +70,36 @@ implemented; it is the canonical reproducibility record referenced by the final 
 - Outputs land in `data/processed/simulated_phenotypes/scenario{1,2}_*/phenotypes.tsv`
   (columns: FID, IID, super_pop, phenotype).
 
-## Stages 3-6 (Track A) / B1-B3 (Track B)
+## Stage 3 — EUR-Only Discovery GWAS (Track A)
+
+- Implementation: `src/trackA_synthetic/stage3_eur_gwas/run_gwas.py`.
+- Simple, unadjusted per-SNP linear regression (`plink2 --glm allow-no-covars`, no PCs/
+  covariates) on each scenario's simulated phenotype, restricted to EUR samples only — per
+  BUILD_PLAN.md §6 Stage 3's explicit "simple linear regression per-SNP" spec. Run once per
+  scenario (Definition of Done item 3 requires both).
+- Uses the same shared biallelic bed/bim/fam Stage 2 simulated the phenotype on, so every
+  causal variant is guaranteed present in the GWAS output for Stage 4's PRS construction.
+- **Tooling quirk:** the bed/fam's implicit 6th-column phenotype is `-9` (missing) for every
+  sample; a `--pheno` file whose column is also named `PHENO1` collides with it
+  (`Duplicate phenotype/covariate ID 'PHENO1'`), and forcing `-9` to be read as a real value
+  (`--no-input-missing-phenotype`) makes `--glm` choke on that now-constant phenotype instead.
+  Fixed by naming our column `SYNTH_PHENO` and passing `--pheno-name SYNTH_PHENO` to restrict
+  `--glm` to only our simulated phenotype.
+- **Verified end-to-end on real data** (chr21+chr22 smoke-test subset, 2026-08-01): both
+  scenarios ran successfully (503 EUR samples, 154,384 SNPs tested, all 300 causal variants
+  present in the output). Sanity-checked causal-variant enrichment against background: causal
+  variants are nominally significant (p<0.05) 13.3% (Scenario 1) / 15.0% (Scenario 2) of the
+  time vs. 5.6-5.7% for background SNPs (~2.5x enrichment). This is modest, not dramatic —
+  expected and correct for a polygenic architecture where h²=0.5 is spread across 300 causal
+  variants (~0.17% heritability each), well below what n=503 can detect per-SNP at strict
+  significance. This is the same reason Bayesian PRS methods that use genome-wide signal
+  (LDpred2, PRS-CSx) are expected to outperform a top-hits-only baseline (PRSice-2) on this
+  kind of trait — see BUILD_PLAN.md §4's PRSice-2/LDpred2 rows.
+- Outputs land in `data/processed/gwas/scenario{1,2}_*/eur_discovery_gwas.SYNTH_PHENO.glm.linear`
+  (standard plink2 `--glm` summary-stats format: CHROM, POS, ID, REF, ALT, A1, A1_FREQ, BETA,
+  SE, T_STAT, P, ...).
+
+## Stages 4-6 (Track A) / B1-B3 (Track B)
 
 Not yet implemented. See `docs/BUILD_PLAN.md` §6 for the full stage detail this section will
 document once each stage lands.
