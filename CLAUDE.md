@@ -17,9 +17,13 @@ Stage 4 (`src/trackA_synthetic/stage4_prs_construction/`) has PRSice-2 and PRS-C
 LDpred2 is implemented but hasn't completed end-to-end in this sandbox (resource contention, not a
 code issue — see METHODS.md before re-attempting, there's a documented history of what was tried).
 Stage 5 (`.../stage5_crossancestry_evaluation/`) and Stage 6 (`.../stage6_recalibration/`) are
-implemented and verified with the two working Stage 4 methods. Track B is not yet built. See
-`METHODS.md` for the run record and non-obvious fixes/quirks found while implementing each stage —
-read it before re-deriving something that was already debugged there.
+implemented and verified with the two working Stage 4 methods. Track B
+(`src/trackB_real_scores/`, all three stages: download real PGS Catalog score, compute on all
+2,504 samples, compare to published height stats) is implemented and verified — remember its
+results are descriptive/illustrative only, never a validated accuracy claim (see the
+Non-negotiable framing section below). See `METHODS.md` for the run record and non-obvious
+fixes/quirks found while implementing each stage — read it before re-deriving something that
+was already debugged there.
 
 ## Two-track structure
 

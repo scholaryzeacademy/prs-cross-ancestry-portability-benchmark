@@ -215,3 +215,46 @@ of the three ever see any evaluation-target ancestry's data during construction.
   claim to take on faith: here recalibration recovers *100% of calibration and 0% of
   discriminative accuracy*, by mathematical necessity, which is itself an honest, reportable
   finding about what this class of recalibration can and cannot fix.
+
+## Track B — Real PGS Catalog Scores (Descriptive Only)
+
+> **Every result in this section is descriptive/illustrative, never a validated accuracy
+> claim** — 1000 Genomes carries no phenotype data, so there is no ground truth to validate a
+> prediction against (BUILD_PLAN.md §6 Stage B3, §9 item 4: this disclaimer must repeat
+> everywhere Track B is discussed, not appear once).
+
+- **Stage B1** (`src/trackB_real_scores/stageB1_download_pgs/download_pgs.py`): downloads real
+  PGS Catalog scores via `pgscatalog-download`, GRCh37-harmonized to match 1000 Genomes' build.
+  Uses height (PGS000297, "GRS3290_Height", Xie et al. 2020, 3,290 variants) only — the most
+  commonly cited BMI score (PGS000027) is genome-wide with ~2.1M variants, wasteful to fully
+  download/process against this project's chr21+22-only smoke-test panel where the vast
+  majority couldn't be scored anyway. Height alone satisfies BUILD_PLAN.md's "one or more"
+  requirement.
+- **Stage B2** (`src/trackB_real_scores/stageB2_compute_scores/compute_scores.py`): matches the
+  scoring file to our QC'd panel by chromosome+position (not rsID — Stage 1 uses
+  chr:pos:ref:alt IDs), computes the score for **all** 2,504 individuals across all five
+  super-populations via `plink2 --score` (no held-out split — Track B has no phenotype to guard
+  against overfitting to). Of the 3,290 scoring variants, 63 fall on chr21/22 and 52 have a
+  matching allele in our QC'd panel (11 dropped: multiallelic/strand mismatches at that
+  position) — a small subset by design (smoke-test scope), not a bug.
+- **Stage B3** (`src/trackB_real_scores/stageB3_descriptive_comparison/compare.py` +
+  `published_height_reference.tsv`): compares each super-population's mean PGS to published
+  national height statistics for representative countries per super-population (full citations
+  and per-row survey year/method in `published_height_reference.tsv`'s header — sourced from
+  Wikipedia's "Average human height by country" compilation of national surveys and NCD-RisC
+  2016, accessed 2026-08-02). This mapping is itself approximate: 1000 Genomes
+  super-populations aggregate several specific source populations that don't correspond to a
+  single country, and the reference figures span different survey years/methods/sexes.
+- **Real finding, reported honestly rather than smoothed over**: **0 of 5** super-populations'
+  PGS rank matches the published-height rank (`data/processed/pgs_catalog/stageB3_descriptive_comparison.tsv`).
+  AFR ranks highest by PGS but 2nd by published height; EUR ranks highest by published height
+  but only 4th by PGS. This is not evidence the pipeline is broken — it's a plausible,
+  small-scale illustration of the exact real-world PRS cross-ancestry portability problem
+  Track A's synthetic experiment was built to quantify with a controlled ground truth: a
+  European-ancestry-derived score (here, height GWAS predominantly from European cohorts),
+  applied to other ancestries with no ancestry-appropriate recalibration (Stage 6 exists
+  precisely because this is expected) and using only 52 of 3,290 variants (chr21+22 smoke-test
+  scope), should not be expected to preserve true population-level phenotypic ordering. Stating
+  this plainly, rather than only in the abstract, is the actual point BUILD_PLAN.md §6 Stage B3
+  asks Track B to make: connect the synthetic story to a real, recognizable score, not
+  independently validate it.

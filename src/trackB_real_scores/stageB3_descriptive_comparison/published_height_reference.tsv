@@ -1,0 +1,45 @@
+# Published, external adult height statistics used for Stage B3's descriptive cross-check
+# (BUILD_PLAN.md §6 Stage B3) — NOT derived from 1000 Genomes, which has no phenotype data.
+#
+# Each 1000 Genomes super-population groups several specific national/ethnic source
+# populations (see IGSR: internationalgenome.org/category/population). Exact matches for
+# average-height statistics aren't available for every constituent population, so this table
+# uses a small set of representative countries per super-population as an approximation —
+# itself a limitation to state alongside any comparison, not just a data-availability footnote.
+#
+# Source: national survey figures as compiled in Wikipedia's "Average human height by country"
+# (en.wikipedia.org/wiki/Average_human_height_by_country, accessed 2026-08-02), which in turn
+# cites national health-survey and NCD-RisC-derived figures per country (NCD Risk Factor
+# Collaboration, "A century of trends in adult human height", eLife 2016;5:e13410). Measurement
+# year/method varies by country (noted per row) — these are not from one harmonized survey wave.
+#
+# super_pop	representative_country	sex	mean_height_cm	survey_year	measurement_method
+EUR	Finland	M	180.7	2010-2011	measured
+EUR	Finland	F	167.2	2010-2011	measured
+EUR	Spain	M	174.0	2007	self-reported
+EUR	Spain	F	159.6	2007-2008	measured
+AFR	Nigeria	M	174.8	2024	measured
+AFR	Kenya	M	169.6	2016	self-reported
+AFR	Kenya	F	158.2	2016	self-reported
+AFR	Sierra_Leone	M	166.0	2009	measured
+AFR	Sierra_Leone	F	158.0	2009	measured
+AFR	Gambia	M	167.2	2011	measured
+AFR	Gambia	F	160.3	2011	measured
+EAS	China	M	169.6	NA	measured
+EAS	China	F	158.9	NA	measured
+EAS	Japan	M	171.8	2018	measured
+EAS	Japan	F	158.6	2018	measured
+EAS	Vietnam	M	168.1	2019-2020	measured
+EAS	Vietnam	F	156.2	2019-2020	measured
+SAS	India	M	165.0	2011	measured
+SAS	India	F	152.0	2011	measured
+SAS	Pakistan	M	165.8	2013-2014	measured
+SAS	Pakistan	F	153.9	2013-2014	measured
+SAS	Sri_Lanka	M	163.6	2005-2006	measured
+SAS	Sri_Lanka	F	151.4	2005-2006	measured
+AMR	Mexico	M	172.0	2014	measured
+AMR	Mexico	F	159.0	2014	measured
+AMR	Peru	M	164.0	2005	measured
+AMR	Peru	F	151.0	2005	measured
+AMR	Colombia	M	170.6	2002	measured
+AMR	Colombia	F	158.7	2002	measured

@@ -8,13 +8,12 @@ truth — and how much an ancestry-recalibration step recovers.
 Full plan, rationale, and honesty/scope constraints: **[`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md)**.
 Repo-wide working agreements for contributors (human or AI): **[`CLAUDE.md`](CLAUDE.md)**.
 
-> **Status: Stages 1-6 implemented.** Two tracks are planned — **Track A** (synthetic ground
-> truth via GCTA simulation + three PRS methods) and **Track B** (real PGS Catalog scores,
-> descriptive only). Stages 1-3 (1000G download/QC, GCTA simulation, EUR discovery GWAS) and
-> 5-6 (cross-ancestry evaluation, recalibration) are implemented and verified on real data.
-> Stage 4 (PRS construction) has PRSice-2 and PRS-CSx complete; LDpred2 is implemented but not
-> yet run end-to-end (blocked by this sandbox's resource contention, not a code issue — see
-> METHODS.md). Track B is not yet built.
+> **Status: both tracks implemented.** **Track A** (synthetic ground truth via GCTA simulation +
+> three PRS methods): Stages 1-3 and 5-6 are implemented and verified on real data; Stage 4 (PRS
+> construction) has PRSice-2 and PRS-CSx complete, LDpred2 is implemented but not yet run
+> end-to-end (blocked by this sandbox's resource contention, not a code issue — see METHODS.md).
+> **Track B** (real PGS Catalog scores, descriptive only): all three stages implemented and
+> verified on real data.
 
 ## Quickstart
 
@@ -52,6 +51,11 @@ python3 src/trackA_synthetic/stage5_crossancestry_evaluation/evaluate.py
 
 # 9. Stage 6 — recalibration (needs Stage 4 output)
 python3 src/trackA_synthetic/stage6_recalibration/recalibrate.py
+
+# 10. Track B — real PGS Catalog score (descriptive only; needs Stage 1 output)
+python3 src/trackB_real_scores/stageB1_download_pgs/download_pgs.py
+python3 src/trackB_real_scores/stageB2_compute_scores/compute_scores.py
+python3 src/trackB_real_scores/stageB3_descriptive_comparison/compare.py
 ```
 
 `download.py --chromosomes all` fetches the full autosomal panel (tens of GB) instead of the
@@ -68,6 +72,9 @@ src/trackA_synthetic/stage5_crossancestry_evaluation/  Stage 5: apply models to 
 src/trackA_synthetic/stage6_recalibration/  Stage 6: empirical per-ancestry recalibration
 src/trackA_synthetic/                  Track A: GCTA simulation -> EUR GWAS -> PRS construction -> evaluation -> recalibration
 src/trackB_real_scores/                Track B: real PGS Catalog scores applied to the same genotypes (descriptive only)
+  stageB1_download_pgs/                  B1: download real scoring files via pgscatalog-download
+  stageB2_compute_scores/                B2: compute the score on all 2,504 individuals via plink2 --score
+  stageB3_descriptive_comparison/        B3: compare per-ancestry PGS means to published height stats (descriptive only)
 configs/simulation_parameters.yaml     Stage 2 simulation architecture (causal variants, effect sizes, heritability) — DRAFT, pending Biostatistics review
 scripts/verify_tools.py                Check/install GCTA, PRSice-2, PRS-CSx, plink2, pgscatalog-utils, bigsnpr
 notebooks/, reports/                   Result notebooks and the final write-up
