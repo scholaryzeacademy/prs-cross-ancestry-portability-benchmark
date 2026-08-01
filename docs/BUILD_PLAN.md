@@ -259,8 +259,8 @@ prs-cross-ancestry-portability-benchmark/
 - [ ] Confirm 1000 Genomes/IGSR data usage terms (long-established as an open, consent-based public resource, but document the specific terms rather than assuming)
 - [ ] Confirm PGS Catalog's overall EBI terms of use, and check the specific license of any individual scoring file used in Track B, since some carry their own CC or non-commercial terms distinct from the Catalog's general terms
 - [ ] Confirm GCTA, PRSice-2, LDpred2/`bigsnpr`, PRS-CSx, and `pgscatalog-utils`/`pgsc_calc` license terms (check each repository's LICENSE file directly)
-- [ ] Cite Momin et al. 2026, Ruan et al. 2022 (PRS-CSx), and the PGS Catalog's own publications clearly as the methodological foundation this project builds on
-- [ ] Choose and apply an explicit open-source license for original code
+- [x] Cite Momin et al. 2026, Ruan et al. 2022 (PRS-CSx), and the PGS Catalog's own publications clearly as the methodological foundation this project builds on — see `reports/final_writeup/TECHNICAL_WRITEUP.md` References
+- [x] Choose and apply an explicit open-source license for original code — MIT, see `LICENSE`
 
 ---
 
@@ -280,15 +280,15 @@ prs-cross-ancestry-portability-benchmark/
 
 ## 13. Deliverables Checklist
 
-- [ ] Public GitHub repository with complete documentation
-- [ ] `METHODS.md` documenting the full simulation architecture (causal variants, effect sizes, heritability, both scenarios) and every PRS method's configuration
-- [ ] `LICENSES.md` per §11
-- [ ] Working CI smoke test
-- [ ] Full cross-ancestry predictive accuracy results table: 3 methods × 5 ancestries × 2 scenarios, before and after recalibration
-- [ ] Recalibration effectiveness analysis, reported honestly including any residual gap
-- [ ] Track B descriptive cross-check results, clearly labeled as illustrative
-- [ ] ~1,500–2,500 word technical write-up
-- [ ] One-page case-study-style PDF summary
+- [x] Public GitHub repository with complete documentation
+- [x] `METHODS.md` documenting the full simulation architecture (causal variants, effect sizes, heritability, both scenarios) and every PRS method's configuration
+- [x] `LICENSES.md` per §11 (license-confirmation sub-items above still open)
+- [x] Working CI smoke test (Stage 1 only, per §5's CI-scope row; Stages 2+ run manually/on-demand as intended)
+- [ ] Full cross-ancestry predictive accuracy results table: 3 methods × 5 ancestries × 2 scenarios, before and after recalibration — **2 of 3 methods done** (PRSice-2, PRS-CSx); LDpred2 implemented but not yet run end-to-end in this environment, see `METHODS.md` Stage 4
+- [x] Recalibration effectiveness analysis, reported honestly including any residual gap
+- [x] Track B descriptive cross-check results, clearly labeled as illustrative
+- [x] ~1,500–2,500 word technical write-up — `reports/final_writeup/TECHNICAL_WRITEUP.md` (1,888 words)
+- [x] One-page case-study-style PDF summary — `reports/final_writeup/case_study_summary.pdf`
 
 ---
 
