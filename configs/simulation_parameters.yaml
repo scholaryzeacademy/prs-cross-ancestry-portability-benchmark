@@ -51,6 +51,14 @@ discovery_gwas:
   rationale: >
     Deliberately mimics the real-world European-ancestry bias in published GWAS
     (BUILD_PLAN.md §0, §6 Stage 3).
+  holdout_fraction: 0.2
+  holdout_seed: 20260801
+  holdout_rationale: >
+    A fraction of EUR samples is held out of the discovery GWAS entirely, so Stage 5 has a
+    genuine held-out same-ancestry evaluation set (BUILD_PLAN.md §6 Stage 5: "including a
+    held-out EUR subset as the 'easy,' same-ancestry baseline case"; §9 item 1's sanity check
+    also explicitly requires a same-ancestry train/test split). Without this, "EUR" evaluation
+    would be in-sample against the GWAS training data, not a real held-out test.
 
 open_questions_for_biostatistics_review:
   - Is n_causal=300 and h2=0.5 the right polygenicity/heritability combination, or should

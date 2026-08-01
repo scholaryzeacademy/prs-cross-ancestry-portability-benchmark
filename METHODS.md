@@ -79,6 +79,14 @@ implemented; it is the canonical reproducibility record referenced by the final 
   scenario (Definition of Done item 3 requires both).
 - Uses the same shared biallelic bed/bim/fam Stage 2 simulated the phenotype on, so every
   causal variant is guaranteed present in the GWAS output for Stage 4's PRS construction.
+- **EUR discovery/held-out split**: before the GWAS runs, EUR samples are partitioned into a
+  discovery subset (used for the GWAS) and a held-out subset the GWAS never sees
+  (`configs/simulation_parameters.yaml`: `discovery_gwas.holdout_fraction=0.2`,
+  `holdout_seed=20260801`; cached in `data/processed/gwas/_shared/keep_EUR_{discovery,holdout}.txt`,
+  shared across both scenarios). This wasn't in the initial implementation — Stage 5 (and
+  BUILD_PLAN.md §9 item 1's sanity check) explicitly require a genuine held-out same-ancestry
+  evaluation set; without it, "EUR" evaluation would be in-sample against the GWAS training
+  data, not a real held-out test. Caught and fixed while starting Stage 4.
 - **Tooling quirk:** the bed/fam's implicit 6th-column phenotype is `-9` (missing) for every
   sample; a `--pheno` file whose column is also named `PHENO1` collides with it
   (`Duplicate phenotype/covariate ID 'PHENO1'`), and forcing `-9` to be read as a real value
@@ -86,10 +94,11 @@ implemented; it is the canonical reproducibility record referenced by the final 
   Fixed by naming our column `SYNTH_PHENO` and passing `--pheno-name SYNTH_PHENO` to restrict
   `--glm` to only our simulated phenotype.
 - **Verified end-to-end on real data** (chr21+chr22 smoke-test subset, 2026-08-01): both
-  scenarios ran successfully (503 EUR samples, 154,384 SNPs tested, all 300 causal variants
-  present in the output). Sanity-checked causal-variant enrichment against background: causal
-  variants are nominally significant (p<0.05) 13.3% (Scenario 1) / 15.0% (Scenario 2) of the
-  time vs. 5.6-5.7% for background SNPs (~2.5x enrichment). This is modest, not dramatic —
+  scenarios ran successfully (503 EUR samples split into 402 discovery / 101 held-out,
+  154,384 SNPs tested, all 300 causal variants present in the output). Sanity-checked
+  causal-variant enrichment against background: causal variants are nominally significant
+  (p<0.05) 13.0% (Scenario 1) / 13.7% (Scenario 2) of the time vs. 5.2-5.7% for background
+  SNPs (~2.4x enrichment). This is modest, not dramatic —
   expected and correct for a polygenic architecture where h²=0.5 is spread across 300 causal
   variants (~0.17% heritability each), well below what n=503 can detect per-SNP at strict
   significance. This is the same reason Bayesian PRS methods that use genome-wide signal
