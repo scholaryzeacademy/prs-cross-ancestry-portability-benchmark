@@ -1,6 +1,9 @@
-# Downloaded data/tools (fetched via scripts/download_data.py; not checked into git)
+# Downloaded data/tools (fetched via src/shared_stage1_1000g_download_qc/download.py and
+# scripts/verify_tools.py; not checked into git)
 data/
 *.part
+tools/*
+!tools/.gitkeep
 
 # Python
 __pycache__/
@@ -10,3 +13,6 @@ __pycache__/
 .Rhistory
 .RData
 .Rproj.user/
+renv/library/
+renv/local/
+renv/staging/

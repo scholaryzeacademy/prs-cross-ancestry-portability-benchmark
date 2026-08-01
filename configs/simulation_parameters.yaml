@@ -1,0 +1,64 @@
+# Stage 2 GCTA phenotype simulation architecture (BUILD_PLAN.md §6 Stage 2, §9 item 5).
+#
+# STATUS: DRAFT — pending Biostatistics review and sign-off before Phase 1 begins
+# (BUILD_PLAN.md §12: Biostatistics owns Stage 2 simulation architecture design).
+# Every parameter below must stay in sync with whatever GCTA is actually invoked with,
+# so the simulation is independently reproducible from this file alone.
+
+trait:
+  name: synthetic_quantitative_trait
+  type: quantitative          # GCTA --simu-qt (see BUILD_PLAN.md §4 GCTA row)
+  heritability: 0.5           # h^2 — realistic for a moderately polygenic trait (BUILD_PLAN.md §6 Stage 2)
+
+causal_variants:
+  n_causal: 300                # "a few hundred", spread across multiple chromosomes (BUILD_PLAN.md §6 Stage 2)
+  selection_method: random_common_variants
+  maf_min: 0.05
+  maf_max: 0.5
+  chromosomes: all              # full design; CI smoke test restricts this to whatever chromosomes are downloaded (chr21, chr22 by default — see docs/BUILD_PLAN.md §5 CI row)
+  random_seed: 20260801
+
+scenarios:
+  scenario1_equal_effects:
+    description: >
+      Identical causal-variant effect sizes applied uniformly to every individual regardless
+      of super-population. Isolates the portability problem caused purely by real differences
+      in allele frequency and LD structure across ancestries, holding biology constant
+      (BUILD_PLAN.md §6 Stage 2, Scenario 1).
+    effect_size_distribution: gaussian   # drawn once from N(0, sigma^2) per causal variant, GCTA default
+    per_ancestry_perturbation: none
+
+  scenario2_ancestry_varying_effects:
+    description: >
+      Causal-variant effect sizes are perturbed independently per super-population before
+      simulation, modeling genuine gene-by-ancestry effect-size heterogeneity
+      (BUILD_PLAN.md §6 Stage 2, Scenario 2). Documented here so the exact perturbation
+      scheme is reproducible, per BUILD_PLAN.md §9 item 5.
+    effect_size_distribution: gaussian
+    per_ancestry_perturbation:
+      method: multiplicative_gaussian_noise
+      # effect_size[ancestry] = base_effect * N(1, perturbation_sd), applied independently per ancestry
+      perturbation_sd: 0.3
+      target_cross_ancestry_genetic_correlation: 0.7   # informs perturbation_sd choice; not a hard constraint
+      per_ancestry_random_seed_offset: {EUR: 0, AFR: 1, AMR: 2, EAS: 3, SAS: 4}
+    rationale: >
+      A moderate, documented multiplicative perturbation (rather than fully independent
+      per-ancestry effects) reflects literature findings that cross-ancestry genetic
+      correlations for most complex traits are high but not 1.0.
+
+discovery_gwas:
+  cohort: EUR_only
+  rationale: >
+    Deliberately mimics the real-world European-ancestry bias in published GWAS
+    (BUILD_PLAN.md §0, §6 Stage 3).
+
+open_questions_for_biostatistics_review:
+  - Is n_causal=300 and h2=0.5 the right polygenicity/heritability combination, or should
+    we add a second, more/less polygenic trait architecture for sensitivity analysis?
+  - Is perturbation_sd=0.3 (Scenario 2) a defensible proxy for genuine effect-size
+    heterogeneity, or should it be calibrated against a specific published cross-ancestry
+    genetic-correlation estimate for a named trait?
+  - Should causal variant selection be restricted to variants passing Stage 1 QC in all five
+    super-populations (the shared variant set qc.py produces), or allowed to include
+    variants that fail QC in some ancestries (to simulate realistic missing-genotype effects
+    on portability)?

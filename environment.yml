@@ -1,0 +1,22 @@
+name: prs-portability
+channels:
+  - conda-forge
+  - bioconda
+dependencies:
+  - python=3.10
+  - plink2
+  - bcftools
+  - htslib
+  - numpy
+  - pandas
+  - scipy
+  - scikit-learn
+  - statsmodels
+  - matplotlib
+  - pyyaml
+  - jinja2
+  - jupyterlab
+  - pytest
+  - pip
+  - pip:
+      - pgscatalog-utils
