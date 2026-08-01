@@ -9,9 +9,12 @@ polygenic risk score (PRS) predictive accuracy is lost when a score trained on E
 is applied to other ancestries, and how much a recalibration step recovers. Full plan: `docs/BUILD_PLAN.md`
 (read it before making architectural decisions — this file only summarizes it).
 
-**Current status:** Planning/early build. Only `docs/BUILD_PLAN.md` and `scripts/download_data.py` exist
-so far; the `src/`, `notebooks/`, `configs/`, `tests/`, `reports/` layout in §7 of the build plan is the
-target structure, not yet built.
+**Current status:** Stages 1-2 implemented and verified on real data (chr21+chr22 smoke-test subset).
+Stage 1 (`src/shared_stage1_1000g_download_qc/`) downloads/QCs 1000 Genomes. Stage 2
+(`src/trackA_synthetic/stage2_gcta_simulation/`) runs the GCTA phenotype simulation for both scenarios.
+Stages 3+ (GWAS, PRS construction, evaluation, recalibration, Track B) are not yet built. See
+`METHODS.md` for the run record and non-obvious fixes/quirks found while implementing each stage —
+read it before re-deriving something that was already debugged there.
 
 ## Two-track structure
 
@@ -46,22 +49,22 @@ target structure, not yet built.
   `pgscatalog-ancestry-adjust` for recalibration).
 - Stack spans Python 3.10+ and R 4.x; expect both `environment.yml` and an `renv`/CRAN lockfile as the
   project matures.
-- `scripts/download_data.py` is a stdlib-only fetcher (no third-party deps; `requirements.txt` documents
-  this) for genotypes, PGS scoring files, and tool binaries/source. Key usage:
-  ```
-  python3 scripts/download_data.py --list                                   # show resolved catalog
-  python3 scripts/download_data.py                                          # light smoke-test set (chr21/22, no LD panels)
-  python3 scripts/download_data.py --categories all --chromosomes all --prscsx-ld eur
-  ```
-  Downloads are idempotent (size/Content-Length checked, skip-if-present, `--force` to redo) and land in
-  `data/`, which is gitignored — never commit downloaded data or tool binaries.
+- `scripts/verify_tools.py --install` checks/installs GCTA, PRSice-2, PRS-CSx, plink2, pgscatalog-utils,
+  and bigsnpr without sudo (static binaries into `tools/`, `pip install --user`, R via a user-local
+  library — the system R library isn't writable here). Add `--with-r` for bigsnpr (slow: compiles from
+  source, and needs the `~/.R/Makevars` gfortran-linker fix documented in this project's memory).
+- `src/shared_stage1_1000g_download_qc/download.py` fetches 1000 Genomes VCFs + panel (stdlib-only,
+  idempotent, resumable — this sandbox's bandwidth to some hosts is only ~20-40 KB/s, so resumable
+  downloads matter). Downloaded data/tools land in `data/` and `tools/`, both gitignored — never commit
+  them.
 
 ## Conventions
 
 - Every PRS method construction/evaluation step should include a naive baseline for comparison (PRSice-2
   fills that role among the three methods) — this discipline runs through the whole portfolio.
-- Document every GCTA simulation parameter (causal variants, effect sizes, heritability, per-ancestry
-  perturbation scheme) in `configs/simulation_parameters.yaml` once it exists — the simulation must be
-  independently reproducible from that file alone.
+- Every GCTA simulation parameter (causal variants, effect sizes, heritability, per-ancestry
+  perturbation scheme) lives in `configs/simulation_parameters.yaml` — it's still marked DRAFT pending
+  Biostatistics review (see the open questions listed in that file), so treat its values as provisional,
+  not settled, until that review happens.
 - CI should stay light: a small chromosome-arm subset with a handful of simulated causal variants. Full
   genome-wide PRS-CSx/LDpred2 runs are too heavy for CI and are run manually/on-demand.

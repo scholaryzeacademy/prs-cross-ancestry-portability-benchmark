@@ -8,9 +8,11 @@ truth — and how much an ancestry-recalibration step recovers.
 Full plan, rationale, and honesty/scope constraints: **[`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md)**.
 Repo-wide working agreements for contributors (human or AI): **[`CLAUDE.md`](CLAUDE.md)**.
 
-> **Status: Phase 0 (setup).** Two tracks are planned — **Track A** (synthetic ground truth via
-> GCTA simulation + three PRS methods) and **Track B** (real PGS Catalog scores, descriptive
-> only). Only Stage 1 (1000 Genomes download/QC) and environment/tooling setup exist so far.
+> **Status: Stages 1-2 implemented.** Two tracks are planned — **Track A** (synthetic ground
+> truth via GCTA simulation + three PRS methods) and **Track B** (real PGS Catalog scores,
+> descriptive only). Stage 1 (1000 Genomes download/QC) and Stage 2 (GCTA phenotype
+> simulation, both scenarios) are implemented and verified on real data; Stages 3+ are not yet
+> built.
 
 ## Quickstart
 
@@ -30,6 +32,10 @@ python3 src/shared_stage1_1000g_download_qc/qc.py \
   --vcf-dir data/1000genomes/vcf \
   --panel data/1000genomes/metadata/integrated_call_samples_v3.20130502.ALL.panel \
   --chromosomes 21 22
+
+# 5. Stage 2 — GCTA phenotype simulation (both scenarios; needs Stage 1 output)
+python3 src/trackA_synthetic/stage2_gcta_simulation/scenario1_equal_effects.py
+python3 src/trackA_synthetic/stage2_gcta_simulation/scenario2_ancestry_varying_effects.py
 ```
 
 `download.py --chromosomes all` fetches the full autosomal panel (tens of GB) instead of the
@@ -39,6 +45,7 @@ default smoke-test subset — do that deliberately, not by default.
 
 ```
 src/shared_stage1_1000g_download_qc/   Stage 1: download + QC 1000 Genomes (shared by both tracks)
+src/trackA_synthetic/stage2_gcta_simulation/  Stage 2: GCTA phenotype simulation (both scenarios)
 src/trackA_synthetic/                  Track A: GCTA simulation -> EUR GWAS -> PRS construction -> evaluation -> recalibration
 src/trackB_real_scores/                Track B: real PGS Catalog scores applied to the same genotypes (descriptive only)
 configs/simulation_parameters.yaml     Stage 2 simulation architecture (causal variants, effect sizes, heritability) — DRAFT, pending Biostatistics review

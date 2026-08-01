@@ -4,7 +4,7 @@ Full methodological documentation for the PRS Cross-Ancestry Portability & Recal
 Benchmark. This file is filled in stage-by-stage as each part of `docs/BUILD_PLAN.md` §6 is
 implemented; it is the canonical reproducibility record referenced by the final write-up.
 
-**Status:** Phase 0 (setup). Only Stage 1 is implemented so far.
+**Status:** Stages 1-2 implemented and verified on real data.
 
 ## Stage 1 — 1000 Genomes Download & QC (shared)
 
@@ -32,8 +32,43 @@ implemented; it is the canonical reproducibility record referenced by the final 
 
 ## Stage 2 — GCTA Phenotype Simulation (Track A)
 
-Draft architecture (pending Biostatistics review): `configs/simulation_parameters.yaml`.
-Not yet implemented.
+- Parameters: `configs/simulation_parameters.yaml` (**still marked DRAFT, pending
+  Biostatistics review** per the open questions listed there — the implementation below
+  reflects that draft, not a signed-off design).
+- Implementation: `src/trackA_synthetic/stage2_gcta_simulation/common.py` (shared plumbing),
+  `scenario1_equal_effects.py`, `scenario2_ancestry_varying_effects.py`.
+- GCTA requires PLINK1 bed/bim/fam (no multiallelic support), so Stage 1's QC'd pgen is
+  converted once into a shared, biallelic-SNP-only bed/bim/fam
+  (`data/processed/simulated_phenotypes/_shared/1000g_qc_biallelic`) — chr21+chr22 smoke subset
+  went from 179,285 QC'd variants to 154,384 biallelic SNPs.
+- 300 causal variants are selected with MAF in [0.05, 0.5] using the fixed seed in
+  `simulation_parameters.yaml`; the *same* causal-variant set is used in both scenarios so
+  they're directly comparable.
+- GCTA is run once per super-population on the shared bed/bim/fam (`--keep` restricting
+  samples; allele coding stays fixed across runs since the bed/bim/fam itself doesn't change),
+  each targeting `--simu-hsq 0.5`. This means every ancestry gets the same nominal
+  heritability by construction — the portability gap shows up in downstream PRS *prediction*
+  accuracy (Stage 5), not in Stage 2's heritability itself.
+- Scenario 1: identical effect sizes (`base_effect`) passed to every super-population's GCTA
+  run. Scenario 2: `effect[ancestry] = base_effect * N(1, perturbation_sd=0.3)`, independently
+  sampled per super-population via the seed offsets in the config.
+- **Known tooling limitation:** GCTA v1.95.3 has no `--seed` option for `--simu-qt`'s residual
+  noise — the genetic component (causal variants, effect sizes, perturbations) is fully
+  reproducible via our own seeded RNG, but the residual/noise draw is not bit-for-bit
+  reproducible across re-runs. Documented here rather than worked around.
+- **Effect sizes are interpreted per-variance-standardized-genotype unit, not per raw allele
+  count** — confirmed empirically (see validation below), not documented explicitly in GCTA's
+  own docs. Relevant for Stage 4: PRS methods that assume a specific effect-size scale need to
+  account for this.
+- **Verified end-to-end on real data** (chr21+chr22 smoke-test subset, 2026-08-01): both
+  scenarios ran successfully across all five super-populations (2,504 individuals total:
+  AFR 661, AMR 347, EAS 504, EUR 503, SAS 489). Sanity-checked per BUILD_PLAN §9 item 1 by
+  reconstructing the genetic score from the 300 causal variants' variance-standardized
+  genotypes × GCTA's own effect sizes (Scenario 1, EUR): empirical heritability
+  Var(genetic)/Var(phenotype) = 0.53 against a target of 0.5 (n=503; the ~0.03 gap is
+  consistent with sampling noise at this sample size, not a simulation bug).
+- Outputs land in `data/processed/simulated_phenotypes/scenario{1,2}_*/phenotypes.tsv`
+  (columns: FID, IID, super_pop, phenotype).
 
 ## Stages 3-6 (Track A) / B1-B3 (Track B)
 
