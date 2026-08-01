@@ -8,11 +8,13 @@ truth — and how much an ancestry-recalibration step recovers.
 Full plan, rationale, and honesty/scope constraints: **[`docs/BUILD_PLAN.md`](docs/BUILD_PLAN.md)**.
 Repo-wide working agreements for contributors (human or AI): **[`CLAUDE.md`](CLAUDE.md)**.
 
-> **Status: Stages 1-3 implemented.** Two tracks are planned — **Track A** (synthetic ground
+> **Status: Stages 1-6 implemented.** Two tracks are planned — **Track A** (synthetic ground
 > truth via GCTA simulation + three PRS methods) and **Track B** (real PGS Catalog scores,
-> descriptive only). Stage 1 (1000 Genomes download/QC), Stage 2 (GCTA phenotype simulation,
-> both scenarios), and Stage 3 (EUR-only discovery GWAS) are implemented and verified on real
-> data; Stage 4+ (PRS construction) is not yet built.
+> descriptive only). Stages 1-3 (1000G download/QC, GCTA simulation, EUR discovery GWAS) and
+> 5-6 (cross-ancestry evaluation, recalibration) are implemented and verified on real data.
+> Stage 4 (PRS construction) has PRSice-2 and PRS-CSx complete; LDpred2 is implemented but not
+> yet run end-to-end (blocked by this sandbox's resource contention, not a code issue — see
+> METHODS.md). Track B is not yet built.
 
 ## Quickstart
 
@@ -39,6 +41,17 @@ python3 src/trackA_synthetic/stage2_gcta_simulation/scenario2_ancestry_varying_e
 
 # 6. Stage 3 — EUR-only discovery GWAS (both scenarios; needs Stage 2 output)
 python3 src/trackA_synthetic/stage3_eur_gwas/run_gwas.py
+
+# 7. Stage 4 — PRS construction (both scenarios; needs Stage 3 output)
+python3 src/trackA_synthetic/stage4_prs_construction/prsice2_wrapper.py
+python3 src/trackA_synthetic/stage4_prs_construction/prscsx_wrapper.py --download-ld-ref  # first run only
+R_LIBS_USER=~/R/library Rscript src/trackA_synthetic/stage4_prs_construction/ldpred2_wrapper.R --scenario all
+
+# 8. Stage 5 — cross-ancestry evaluation (needs Stage 4 output)
+python3 src/trackA_synthetic/stage5_crossancestry_evaluation/evaluate.py
+
+# 9. Stage 6 — recalibration (needs Stage 4 output)
+python3 src/trackA_synthetic/stage6_recalibration/recalibrate.py
 ```
 
 `download.py --chromosomes all` fetches the full autosomal panel (tens of GB) instead of the
@@ -50,6 +63,9 @@ default smoke-test subset — do that deliberately, not by default.
 src/shared_stage1_1000g_download_qc/   Stage 1: download + QC 1000 Genomes (shared by both tracks)
 src/trackA_synthetic/stage2_gcta_simulation/  Stage 2: GCTA phenotype simulation (both scenarios)
 src/trackA_synthetic/stage3_eur_gwas/  Stage 3: EUR-only discovery GWAS (both scenarios)
+src/trackA_synthetic/stage4_prs_construction/  Stage 4: PRSice-2, LDpred2, PRS-CSx wrappers
+src/trackA_synthetic/stage5_crossancestry_evaluation/  Stage 5: apply models to all 5 ancestries, compute R²
+src/trackA_synthetic/stage6_recalibration/  Stage 6: empirical per-ancestry recalibration
 src/trackA_synthetic/                  Track A: GCTA simulation -> EUR GWAS -> PRS construction -> evaluation -> recalibration
 src/trackB_real_scores/                Track B: real PGS Catalog scores applied to the same genotypes (descriptive only)
 configs/simulation_parameters.yaml     Stage 2 simulation architecture (causal variants, effect sizes, heritability) — DRAFT, pending Biostatistics review

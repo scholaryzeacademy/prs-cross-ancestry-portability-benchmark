@@ -16,3 +16,4 @@ __pycache__/
 renv/library/
 renv/local/
 renv/staging/
+/lib/
