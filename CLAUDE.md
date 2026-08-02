@@ -9,19 +9,20 @@ polygenic risk score (PRS) predictive accuracy is lost when a score trained on E
 is applied to other ancestries, and how much a recalibration step recovers. Full plan: `docs/BUILD_PLAN.md`
 (read it before making architectural decisions — this file only summarizes it).
 
-**Current status:** Stages 1-6 implemented and mostly verified on real data (chr21+chr22 smoke-test
+**Current status:** All 7 stages implemented and verified on real data (chr21+chr22 smoke-test
 subset). Stage 1 (`src/shared_stage1_1000g_download_qc/`) downloads/QCs 1000 Genomes. Stage 2
 (`src/trackA_synthetic/stage2_gcta_simulation/`) runs the GCTA phenotype simulation for both scenarios.
 Stage 3 (`src/trackA_synthetic/stage3_eur_gwas/`) runs the EUR-only discovery GWAS for both scenarios.
-Stage 4 (`src/trackA_synthetic/stage4_prs_construction/`) has PRSice-2 and PRS-CSx verified working;
-LDpred2 is implemented but hasn't completed end-to-end in this sandbox (resource contention, not a
-code issue — see METHODS.md before re-attempting, there's a documented history of what was tried).
-Stage 5 (`.../stage5_crossancestry_evaluation/`) and Stage 6 (`.../stage6_recalibration/`) are
-implemented and verified with the two working Stage 4 methods. Track B
-(`src/trackB_real_scores/`, all three stages: download real PGS Catalog score, compute on all
-2,504 samples, compare to published height stats) is implemented and verified — remember its
-results are descriptive/illustrative only, never a validated accuracy claim (see the
-Non-negotiable framing section below). See `METHODS.md` for the run record and non-obvious
+Stage 4 (`src/trackA_synthetic/stage4_prs_construction/`) has all three methods verified working —
+PRSice-2, PRS-CSx, and (as of 2026-08-02) LDpred2, which needed two chr22-scoped reruns to get past
+this sandbox's resource contention (not a code issue — see METHODS.md for the full run history
+before re-attempting anything similar). Stage 5 (`.../stage5_crossancestry_evaluation/`) and Stage 6
+(`.../stage6_recalibration/`) are implemented and verified with the full 3-method × 5-ancestry ×
+2-scenario results table. Stage 7 (`reports/final_writeup/`) is the combined technical write-up and
+case-study PDF. Track B (`src/trackB_real_scores/`, all three stages: download real PGS Catalog
+score, compute on all 2,504 samples, compare to published height stats) is implemented and
+verified — remember its results are descriptive/illustrative only, never a validated accuracy claim
+(see the Non-negotiable framing section below). See `METHODS.md` for the run record and non-obvious
 fixes/quirks found while implementing each stage — read it before re-deriving something that
 was already debugged there.
 

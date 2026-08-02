@@ -284,7 +284,7 @@ prs-cross-ancestry-portability-benchmark/
 - [x] `METHODS.md` documenting the full simulation architecture (causal variants, effect sizes, heritability, both scenarios) and every PRS method's configuration
 - [x] `LICENSES.md` per §11 (license-confirmation sub-items above still open)
 - [x] Working CI smoke test (Stage 1 only, per §5's CI-scope row; Stages 2+ run manually/on-demand as intended)
-- [ ] Full cross-ancestry predictive accuracy results table: 3 methods × 5 ancestries × 2 scenarios, before and after recalibration — **2 of 3 methods done** (PRSice-2, PRS-CSx); LDpred2 implemented but not yet run end-to-end in this environment, see `METHODS.md` Stage 4
+- [x] Full cross-ancestry predictive accuracy results table: 3 methods × 5 ancestries × 2 scenarios, before and after recalibration — all three methods (PRSice-2, PRS-CSx, LDpred2) completed 2026-08-02, see `METHODS.md` Stage 4/5
 - [x] Recalibration effectiveness analysis, reported honestly including any residual gap
 - [x] Track B descriptive cross-check results, clearly labeled as illustrative
 - [x] ~1,500–2,500 word technical write-up — `reports/final_writeup/TECHNICAL_WRITEUP.md` (1,888 words)

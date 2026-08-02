@@ -125,16 +125,32 @@ of the three ever see any evaluation-target ancestry's data during construction.
   and `PRSice.R` reinstalls ggplot2/data.table/optparse into a local `./lib` on every run unless
   `R_LIBS_USER` is set in the environment first (50MB, several minutes wasted per run otherwise).
 - **LDpred2-auto** (`src/trackA_synthetic/stage4_prs_construction/ldpred2_wrapper.R`, via
-  `bigsnpr`): implemented and code-reviewed, but **not completed in this session** — this
-  sandbox is a heavily shared host (load average 130-150 sustained on 32 cores during testing,
-  swap fully exhausted at times) and three attempts (full chr21+22/250kb window; chr22-only/100kb
-  window with a 25-min cap, which got through the LD step in ~14 min but not the MCMC step;
-  chr22-only with a reduced MCMC budget and 45-min cap, externally killed before finishing) all
-  failed to complete. No genetic map is available, so `snp_cor`'s LD window is defined in
-  physical bp (100kb radius) rather than cM — a documented approximation, not the cause of the
-  slowness (the chr22-only LD step itself did complete once, in ~14 minutes). The script is
-  ready to run as-is (`Rscript ldpred2_wrapper.R --scenario all`) given a less contended host;
-  no code changes should be needed.
+  `bigsnpr`): implemented, and **completed successfully for both scenarios on 2026-08-02**, after
+  three earlier attempts (documented below) had failed on this same heavily shared host (load
+  average 120-150 sustained on 32 cores, swap frequently near-exhausted from other users' jobs —
+  a `gmx mdrun` pinned at ~10 cores and five concurrent `cell2location` fits, not anything this
+  project controls). No genetic map is available, so `snp_cor`'s LD window is defined in physical
+  bp (100kb radius) rather than cM — a documented approximation, not the cause of the slowness.
+  **What finally worked:** a `--scenario all` run (90-min `timeout` cap) completed scenario 1 in
+  full (chr22 LD step 806s, then match/LDSC/MCMC) but was killed mid-MCMC on scenario 2 at the
+  cap. Rather than redo scenario 1, reran with `--scenario 2` alone — this failed instantly the
+  first time (`snp_readBed()`: backing file already exists — the killed run's `.bk`/`.rds`/`.sbk`
+  scratch files in `data/processed/prs_models/_shared/ldpred2/` block a fresh
+  `snp_readBed`/`as_SFBM` call on rerun; deleting `eur_discovery_bigsnp.bk`, `.rds`, and
+  `corr_sfbm.sbk` before rerunning fixed it, since those are the only files a fresh invocation of
+  `prepare_shared_ld()` needs to be able to recreate). The `--scenario 2` rerun then went through
+  a ~40-minute stretch with zero measured CPU-time growth (`ps` `TIME` field flat across two
+  20-minute checks) while system swap was fully exhausted (8.0/8.0Gi) — indistinguishable in the
+  moment from a genuine hang, but it was in fact still making progress: it completed on its own
+  well inside the 90-minute cap. Lesson for next time: a flat `ps` `TIME` field on this host is
+  consistent with heavy swap-wait, not necessarily a stall — worth letting it ride out the full
+  timeout budget before concluding it's stuck.
+  **Three earlier failed attempts** (full chr21+22/250kb window; chr22-only/100kb window with a
+  25-min cap, which got through the LD step in ~14 min but not the MCMC step; chr22-only with a
+  reduced MCMC budget and 45-min cap, externally killed before finishing) are why the MCMC budget
+  in the script is reduced from bigsnpr's usual defaults (`burn_in=200, num_iter=100` vs.
+  500/200 and 10 chains) — see the code comment in `run_ldpred2_for_scenario()`. No code changes
+  were needed to eventually succeed; it was host contention (im)patience, not a bug.
 - **PRS-CSx** (`src/trackA_synthetic/stage4_prs_construction/prscsx_wrapper.py`): real PRS-CSx,
   run in single-discovery-population mode (`--pop EUR`) since BUILD_PLAN.md feeds all three
   methods the same EUR-only sumstats — the "x" (coupling effects *across* ancestries) only
@@ -150,12 +166,14 @@ of the three ever see any evaluation-target ancestry's data during construction.
   the `ldblk_1kg_<pop>/` subdirectory, not as a sibling of `--ref_dir` — its own `main()` has an
   `UnboundLocalError` if that file isn't found there (a real bug in the tool, not just an
   unclear error message).
-- **Verified on real data** (chr21+chr22, 2026-08-01/02): PRSice-2 and PRS-CSx both completed
+- **Verified on real data** (chr21+chr22, 2026-08-01/02): all three methods now completed
   successfully for both scenarios. PRSice-2: 5,858 SNPs survive clumping (of 131,173 non-ambiguous),
   8-9 usable p-value thresholds per scenario (5e-8 has 0 SNPs in Scenario 1, 1 in Scenario 2 —
   reported honestly as zero-SNP rows are simply absent from the threshold table, consistent with
   Stage 3's finding that this polygenic architecture has weak per-SNP signal). PRS-CSx: full MCMC
   (1,000 iterations) completed for both chromosomes in both scenarios, 27,881 SNPs scored.
+  LDpred2-auto (chr22-only, per the LD-window scope above): 64,272 SNPs scored, all non-zero, in
+  both scenarios — see the LDpred2-auto bullet above for the two-part run history.
 
 ## Stage 5 — Cross-Ancestry Evaluation (Track A)
 
@@ -169,31 +187,45 @@ of the three ever see any evaluation-target ancestry's data during construction.
   Pearson correlation.
 - Full results table (no collapsing to a single "best method" figure, per BUILD_PLAN.md §9 item
   3): `data/processed/evaluation/results.tsv`, one row per (scenario, method, [threshold],
-  ancestry) — 85 rows across both scenarios with the two completed methods.
+  ancestry) — 95 rows across both scenarios, now with all three methods complete (PRSice-2,
+  PRS-CSx, LDpred2-auto), satisfying BUILD_PLAN.md's deliverables checklist item for the full
+  3-method × 5-ancestry × 2-scenario table.
 - **Headline finding, real and reproducible across both scenarios** (not cherry-picked — this is
   the whole results table's pattern): PRSice-2's best-performing threshold in the EUR held-out
   set (p<0.01, R²=0.131 Scenario 1 / 0.049 Scenario 2) clearly beats PRS-CSx's same-ancestry R²
   (0.073 / 0.025) — but that same PRSice-2 model is *worse* than PRS-CSx in **every one of the
   eight** non-EUR (ancestry × scenario) comparisons:
 
-  | Scenario | Ancestry | PRSice-2 (best EUR threshold) | PRS-CSx |
-  |---|---|---|---|
-  | 1 | AFR | 0.0077 | **0.0275** |
-  | 1 | AMR | 0.0098 | **0.0594** |
-  | 1 | EAS | 0.0008 | **0.0165** |
-  | 1 | SAS | 0.0080 | **0.0279** |
-  | 2 | AFR | 0.0081 | **0.0230** |
-  | 2 | AMR | 0.0009 | **0.0480** |
-  | 2 | EAS | 0.0090 | **0.0238** |
-  | 2 | SAS | 0.0161 | **0.0411** |
+  | Scenario | Ancestry | PRSice-2 (best EUR threshold) | PRS-CSx | LDpred2-auto |
+  |---|---|---|---|---|
+  | 1 | AFR | 0.0077 | **0.0275** | 0.0117 |
+  | 1 | AMR | 0.0098 | **0.0594** | 0.0136 |
+  | 1 | EAS | 0.0008 | **0.0165** | 0.0015 |
+  | 1 | SAS | 0.0080 | **0.0279** | 0.0118 |
+  | 2 | AFR | 0.0081 | **0.0230** | 0.0130 |
+  | 2 | AMR | 0.0009 | **0.0480** | 0.0065 |
+  | 2 | EAS | 0.0090 | 0.0238 | **0.0251** |
+  | 2 | SAS | 0.0161 | **0.0411** | 0.0112 |
 
   This matches the literature pattern this project is built around (BUILD_PLAN.md §0, §4):
   genome-wide Bayesian shrinkage methods port across ancestries better than a simple
   clumping+thresholding baseline tuned to one ancestry, even when the baseline looks better
-  same-ancestry. **Caveats that must travel with this finding**: single simulation replicate,
+  same-ancestry — true for PRS-CSx in every one of the eight non-EUR comparisons, and for
+  LDpred2-auto in six of eight (it underperforms PRSice-2's EUR-tuned threshold in Scenario 1 EAS
+  and, more notably, is *beaten by PRSice-2* nowhere but sits below PRS-CSx nearly everywhere).
+  **No method is universally best here** — LDpred2-auto's own same-ancestry (EUR) R² (0.0115 /
+  0.0140) is lower than both other methods' same-ancestry R² in both scenarios, and it only
+  edges out PRS-CSx once (Scenario 2 EAS) — consistent with BUILD_PLAN.md §9's explicit warning
+  against ranking methods as universally "best" and with Momin et al. 2026's finding that no
+  method wins universally. A plausible contributor specific to this run: LDpred2-auto here only
+  had chr22 LD information available (100kb bp-radius window, no genetic map — see the
+  bullet above), a narrower/coarser LD reference than PRS-CSx's official multi-population 1000G
+  HapMap3 panel, which likely handicaps its shrinkage relative to how it would perform with a
+  fuller LD reference — a scope limitation of this smoke test, not necessarily a property of the
+  method in general. **Caveats that must travel with this finding**: single simulation replicate,
   chr21+22-only smoke-test scope, small ancestry sample sizes (CIs in the raw results table are
-  wide), and no LDpred2 result yet to complete the three-method comparison BUILD_PLAN.md calls
-  for — this is a real, honest, but partial result, not a final claim.
+  wide) — this is a real, honest, and now complete (3/3 methods) result for this smoke-test scope,
+  not a final claim about method performance at genome-wide scale.
 
 ## Stage 6 — Recalibration (Track A)
 
@@ -205,7 +237,7 @@ of the three ever see any evaluation-target ancestry's data during construction.
   matching each non-EUR ancestry's raw PRS mean/SD to the EUR held-out reference distribution's.
 - **The actual point of this stage, demonstrated not just asserted**: a linear
   recentering/rescaling transform cannot change Pearson R² — R² depends only on correlation,
-  which is invariant to affine transforms. Confirmed numerically in every one of the 85 rows:
+  which is invariant to affine transforms. Confirmed numerically in every one of the 95 rows:
   `r2_raw` and `r2_recalibrated` in `data/processed/recalibration/results.tsv` are identical to
   4 decimal places throughout. Meanwhile `recal_mean`/`recal_sd` exactly match the EUR
   reference's `ref_mean`/`ref_sd` after recalibration (calibration fixed), while `raw_mean`/
