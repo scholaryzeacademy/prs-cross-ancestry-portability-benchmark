@@ -1,8 +1,8 @@
 # PRS Cross-Ancestry Portability & Recalibration Benchmark: Technical Write-Up
 
-**Status:** Track A Stages 1–6 (LDpred2 pending — see Limitations); Track B Stages B1–B3 complete.
-Full parameters, tooling quirks, and per-stage run records: `METHODS.md`. Full project plan and
-honesty/scope constraints: `docs/BUILD_PLAN.md`.
+**Status:** Track A Stages 1–6 complete, all three PRS methods (PRSice-2, PRS-CSx, LDpred2-auto);
+Track B Stages B1–B3 complete. Full parameters, tooling quirks, and per-stage run records:
+`METHODS.md`. Full project plan and honesty/scope constraints: `docs/BUILD_PLAN.md`.
 
 ## 1. Motivation
 
@@ -56,8 +56,9 @@ config change, not a rewrite.
    - **PRS-CSx** (Bayesian continuous-shrinkage): run in single-discovery-population mode (EUR
      only, matching this project's design — see §3), using the official 1000G EUR LD reference
      panel, restricted to the ~18% of our SNPs overlapping PRS-CSx's HapMap3 SNP set.
-   - **LDpred2-auto** (Bayesian, `bigsnpr`): implemented, self-tuning (no validation phenotype
-     needed), but **not completed end-to-end in this environment** — see Limitations.
+   - **LDpred2-auto** (Bayesian, `bigsnpr`): self-tuning (no validation phenotype needed);
+     completed for both scenarios (chr22-only LD reference, 100kb bp-radius window — see
+     Limitations for why this differs in scope from PRS-CSx's LD reference).
 4. **Cross-ancestry evaluation:** every scoring model applied via `plink2 --score` to held-out EUR
    plus the full AFR/AMR/EAS/SAS sample sets, R² computed against the true simulated phenotype
    (available because this is synthetic ground truth) with a 95% CI (Fisher z-transform).
@@ -78,38 +79,44 @@ statistics for representative countries per super-population (full citations in
 
 ### 3.1 Track A: does the EUR-derived model port?
 
-Full results: `data/processed/evaluation/results.tsv` (85 rows: 2 methods × up to 8 PRSice-2
-thresholds or 1 PRS-CSx model × 5 ancestries × 2 scenarios — no result is collapsed into a single
-"best method" figure, per this project's reporting discipline).
+Full results: `data/processed/evaluation/results.tsv` (95 rows: 3 methods — up to 8 PRSice-2
+thresholds, 1 PRS-CSx model, 1 LDpred2-auto model — × 5 ancestries × 2 scenarios — no result is
+collapsed into a single "best method" figure, per this project's reporting discipline).
 
 **The real, reproducible finding across both scenarios:** PRSice-2's best EUR-tuned threshold
 (p<0.01) clearly beats PRS-CSx in the EUR held-out set (R²=0.131 vs. 0.073, Scenario 1; 0.049 vs.
 0.025, Scenario 2) — but that same PRSice-2 model loses to PRS-CSx in **all eight** non-EUR
-(ancestry × scenario) comparisons:
+(ancestry × scenario) comparisons. LDpred2-auto sits in between: it beats PRSice-2's EUR-tuned
+threshold in six of eight non-EUR comparisons, but underperforms PRS-CSx in seven of eight:
 
-| Scenario | Ancestry | PRSice-2 (best EUR threshold) | PRS-CSx |
-|---|---|---|---|
-| 1 (equal effects) | AFR | 0.0077 | **0.0275** |
-| 1 | AMR | 0.0098 | **0.0594** |
-| 1 | EAS | 0.0008 | **0.0165** |
-| 1 | SAS | 0.0080 | **0.0279** |
-| 2 (ancestry-varying) | AFR | 0.0081 | **0.0230** |
-| 2 | AMR | 0.0009 | **0.0480** |
-| 2 | EAS | 0.0090 | **0.0238** |
-| 2 | SAS | 0.0161 | **0.0411** |
+| Scenario | Ancestry | PRSice-2 (best EUR threshold) | PRS-CSx | LDpred2-auto |
+|---|---|---|---|---|
+| 1 (equal effects) | AFR | 0.0077 | **0.0275** | 0.0117 |
+| 1 | AMR | 0.0098 | **0.0594** | 0.0136 |
+| 1 | EAS | 0.0008 | **0.0165** | 0.0015 |
+| 1 | SAS | 0.0080 | **0.0279** | 0.0118 |
+| 2 (ancestry-varying) | AFR | 0.0081 | **0.0230** | 0.0130 |
+| 2 | AMR | 0.0009 | **0.0480** | 0.0065 |
+| 2 | EAS | 0.0090 | 0.0238 | **0.0251** |
+| 2 | SAS | 0.0161 | **0.0411** | 0.0112 |
 
-This matches the literature pattern this project is built around: a genome-wide Bayesian
-shrinkage method ports across ancestries better than a simple clumping+thresholding baseline
-tuned to one ancestry, even when the baseline looks better same-ancestry. Scenario 1 vs. Scenario
-2 do not show a qualitatively different portability pattern here — both scenarios' cross-ancestry
-R² are similarly depressed relative to EUR, suggesting (at this scope) the LD/allele-frequency
-mechanism Scenario 1 isolates already accounts for most of the observed gap, with Scenario 2's
-added effect-size heterogeneity not obviously worsening it further. This should be treated as a
+This matches the literature pattern this project is built around: genome-wide Bayesian shrinkage
+methods generally port across ancestries better than a simple clumping+thresholding baseline
+tuned to one ancestry, even when the baseline looks better same-ancestry — but **no method is
+universally best here**, consistent with current literature's explicit rejection of a universal
+ranking (Momin et al. 2026). LDpred2-auto's weaker showing relative to PRS-CSx is plausibly scope-
+related rather than a property of the method in general: this run's LDpred2-auto only had chr22 LD
+information available (a 100kb bp-radius window, no genetic map), narrower than PRS-CSx's official
+multi-population 1000G HapMap3 reference panel — see Limitations. Scenario 1 vs. Scenario 2 do not
+show a qualitatively different portability pattern here — both scenarios' cross-ancestry R² are
+similarly depressed relative to EUR, suggesting (at this scope) the LD/allele-frequency mechanism
+Scenario 1 isolates already accounts for most of the observed gap, with Scenario 2's added
+effect-size heterogeneity not obviously worsening it further. This should be treated as a
 preliminary observation, not a settled conclusion (see Limitations).
 
 ### 3.2 Recalibration: what it does and doesn't fix
 
-Every one of the 85 (scenario × method × threshold × ancestry) rows in
+Every one of the 95 (scenario × method × threshold × ancestry) rows in
 `data/processed/recalibration/results.tsv` shows `r2_raw` and `r2_recalibrated` identical to four
 decimal places, while `recal_mean`/`recal_sd` move to exactly match the EUR reference's after
 recalibration (versus visibly differing before). This isn't a null result — it's the expected,
@@ -136,14 +143,15 @@ should not be expected to preserve true population-level phenotypic ordering.
 
 ## 4. Limitations
 
-- **LDpred2 is implemented but not run end-to-end.** Three attempts (full chr21+22 panel;
-  chr22-only with a reduced LD window and a 25-minute cap, which completed LD computation in ~14
-  min but not MCMC sampling; chr22-only with a further-reduced MCMC budget and a 45-minute cap,
-  externally killed with swap fully exhausted) all failed on this specific shared sandbox host
-  (load average 130–150 sustained on 32 cores during testing). The script
-  (`src/trackA_synthetic/stage4_prs_construction/ldpred2_wrapper.R`) is code-reviewed and should
-  run as-is on a less contended host; the three-method comparison BUILD_PLAN.md calls for is
-  currently two of three.
+- **LDpred2-auto's LD reference is chr22-only** (100kb bp-radius window, no genetic map
+  available), narrower than PRS-CSx's official multi-population 1000G HapMap3 LD panel. This
+  project's shared sandbox host proved heavily contended throughout (load average 120–150
+  sustained on 32 cores, swap frequently near-exhausted from other users' unrelated jobs) — three
+  early attempts at a wider/less-restricted run failed outright, and even the eventually-successful
+  runs (chr22-only, reduced MCMC budget) took roughly 75–90 minutes each and one needed a rerun
+  after a stale-lockfile error. LDpred2-auto's comparatively weaker cross-ancestry showing (§3.1)
+  is plausibly attributable to this narrower LD scope rather than the method itself; a genome-wide
+  LD reference on a less contended host would be needed to separate those two explanations.
 - **Smoke-test scope.** chr21+22 only (~6% of the autosomal genome), 300 causal variants, single
   simulation replicate. Effect sizes, portability-gap magnitudes, and the Scenario 1 vs. 2
   comparison should not be over-generalized to genome-wide behavior without a full run.
@@ -167,7 +175,12 @@ truth, not just real-data anecdote — the central, well-documented finding in c
 cross-ancestry literature: a EUR-derived score's advantage over other methods same-ancestry does
 not carry over cross-ancestry, and a Bayesian genome-wide method (PRS-CSx) here consistently
 outperforms a simple clumping+thresholding baseline (PRSice-2) in every non-EUR evaluation, even
-while losing to it in the EUR held-out set. Separately, this project demonstrates numerically
+while losing to it in the EUR held-out set. A second Bayesian method, LDpred2-auto, shows the same
+qualitative pattern relative to PRSice-2 in most (six of eight) non-EUR comparisons but trails
+PRS-CSx in nearly all of them — plausibly a consequence of this run's narrower chr22-only LD
+reference rather than a property of the method itself (§4) — reinforcing rather than contradicting
+this project's built-in refusal to rank any one method as universally best. Separately, this
+project demonstrates numerically
 (not just by assertion) that simple empirical recalibration fixes a score's per-ancestry
 mean/scale completely while leaving its discriminative accuracy completely unchanged — a
 distinction real-world PRS deployment discussions frequently conflate. The real-score Track B
