@@ -256,9 +256,9 @@ prs-cross-ancestry-portability-benchmark/
 
 ## 11. Licensing & Compliance Checklist
 
-- [ ] Confirm 1000 Genomes/IGSR data usage terms (long-established as an open, consent-based public resource, but document the specific terms rather than assuming)
-- [ ] Confirm PGS Catalog's overall EBI terms of use, and check the specific license of any individual scoring file used in Track B, since some carry their own CC or non-commercial terms distinct from the Catalog's general terms
-- [ ] Confirm GCTA, PRSice-2, LDpred2/`bigsnpr`, PRS-CSx, and `pgscatalog-utils`/`pgsc_calc` license terms (check each repository's LICENSE file directly)
+- [x] Confirm 1000 Genomes/IGSR data usage terms — not a blanket public-domain grant; see `LICENSES.md` for the exact disclaimer language and this project's specific use-case judgment
+- [x] Confirm PGS Catalog's overall EBI terms of use, and check the specific license of any individual scoring file used in Track B, since some carry their own CC or non-commercial terms distinct from the Catalog's general terms — see `LICENSES.md`
+- [x] Confirm GCTA, PRSice-2, LDpred2/`bigsnpr`, PRS-CSx, and `pgscatalog-utils`/`pgsc_calc` license terms (check each repository's LICENSE file directly) — see `LICENSES.md`'s Tool Licenses table
 - [x] Cite Momin et al. 2026, Ruan et al. 2022 (PRS-CSx), and the PGS Catalog's own publications clearly as the methodological foundation this project builds on — see `reports/final_writeup/TECHNICAL_WRITEUP.md` References
 - [x] Choose and apply an explicit open-source license for original code — MIT, see `LICENSE`
 
